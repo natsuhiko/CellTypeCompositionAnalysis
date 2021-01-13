@@ -3,45 +3,57 @@ library(Matrix)
 library(numDeriv)
 
 # cell count table
-Y = as.matrix(read.table("Y.txt",header=T,sep="\t",as.is=T))
-colnames(Y)=unlist(strsplit(readLines("Y.txt",n=1),"\t")) # rename cell types
+Y = as.matrix(read.table("../Data/Y.txt",header=T,sep="\t",as.is=T))
+colnames(Y)=unlist(strsplit(readLines("../Data/Y.txt",n=1),"\t")) # rename cell types
+
 
 # meta data table
-metadata = read.table("metadata.txt",header=T,sep="\t",as.is=T)
+metadata = read.table("../Data/metadata.txt",header=T,sep="\t",as.is=T)
+metadata=metadata[match(rownames(Y),metadata$Sample),]
+metadata$Cell_viability[is.na(metadata$Cell_viability)]=mean(metadata$Cell_viability,na.rm=T)
+metadata$Age=scale(log10(metadata$Age))
+metadata$Cell_viability=scale(metadata$Cell_viability)
+metadata$Pool=as.character(metadata$Pool)
 
 # number of samples / number of cell types
 nsamples = nrow(Y)
 ncells = ncol(Y)
 
+
 # repeating the meta data table by the number of cell types
-metadataExp=cbind(metadata[rep(match(rownames(Y),as.character(metadata$Sanger)),ncells),],Celltype=rep(colnames(Y),rep(nsamples,ncells)))
+metadataExp=cbind(metadata[rep(match(rownames(Y),as.character(metadata$Sample)),ncells),],Celltype=rep(colnames(Y),rep(nsamples,ncells)))
+
 
 # poisson regression model
 res.prop=glmer(I(c(Y))~
 (1|Celltype)
 +(1|Sample)
-+(1|Donor)
++(1|Patient)
 +(1|Sex)
 +Age
-+(1|Covid_status)
++(1|COVID_status)
 +(1|Tissue)
 +(1|X10x)
-+(1|Technician)
-+(1|Batch)
-+(1|Date_process)
+#+(1|Technician)
++(1|Pool)
++(1|Date_of_process)
 +(1|Ethnicity)
++(1|Smoker)
++Cell_viability
 
 +(1|Sample:Celltype)
-+(1|Donor:Celltype)
++(1|Patient:Celltype)
 +(1|Sex:Celltype)
 +(Age-1|Celltype)
 +(1|Tissue:Celltype)
 +(1|Ethnicity:Celltype)
 +(1|X10x:Celltype)
-+(1|Technician:Celltype)
-+(1|Batch:Celltype)
-+(1|Date_process:Celltype)
-+(1|Covid_status:Celltype)
+#+(1|Technician:Celltype)
++(1|Pool:Celltype)
++(1|Date_of_process:Celltype)
++(1|COVID_status:Celltype)
++(1|Smoker:Celltype)
++(Cell_viability-1|Celltype)
 ,
 family=poisson,data=metadataExp,control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=2e5)))
 
@@ -67,32 +79,34 @@ dev.off()
 # Posterior mean and standard deviation
 source("getCondVal.R")
 postmean = cbind(
-    getCondVal(res.prop.ranef,"Covid_status:Celltype",ncells)[[1]][,c(2,1,3)],
+    getCondVal(res.prop.ranef,"Tissue:Celltype",ncells,celltype=colnames(Y))[[1]],
     NA,
-    getCondVal(res.prop.ranef,"Tissue:Celltype",ncells)[[1]],
+    getCondVal(res.prop.ranef,"COVID_status:Celltype",ncells,celltype=colnames(Y))[[1]][,c(2,1,3)],
     NA,
-    getCondVal(res.prop.ranef,"Celltype",ncells)[[1]][,1,drop=F], # effect sizes for Age
+    getCondVal(res.prop.ranef,"Celltype",ncells,celltype=colnames(Y))[[1]][,1,drop=F], # effect sizes for Age
     NA,
-    getCondVal(res.prop.ranef,"Ethnicity:Celltype",ncells)[[1]]
+    getCondVal(res.prop.ranef,"Celltype",ncells,celltype=colnames(Y))[[1]][,2,drop=F]
+    #getCondVal(res.prop.ranef,"Ethnicity:Celltype",ncells)[[1]]
 )
 
 lfsr = cbind(
-    getCondVal(res.prop.ranef,"Covid_status:Celltype",ncells)[[2]][,c(2,1,3)],
+    getCondVal(res.prop.ranef,"Tissue:Celltype",ncells,celltype=colnames(Y))[[2]],
     NA,
-    getCondVal(res.prop.ranef,"Tissue:Celltype",ncells)[[2]],
+    getCondVal(res.prop.ranef,"COVID_status:Celltype",ncells,celltype=colnames(Y))[[2]][,c(2,1,3)],
     NA,
-    getCondVal(res.prop.ranef,"Celltype",ncells)[[2]][,1,drop=F], # effect sizes for Age
+    getCondVal(res.prop.ranef,"Celltype",ncells,celltype=colnames(Y))[[2]][,1,drop=F], # effect sizes for Age
     NA,
-    getCondVal(res.prop.ranef,"Ethnicity:Celltype",ncells)[[2]]
+    getCondVal(res.prop.ranef,"Celltype",ncells,celltype=colnames(Y))[[2]][,2,drop=F]
+    #getCondVal(res.prop.ranef,"Ethnicity:Celltype",ncells,celltype=colnames(Y))[[2]]
 )
 
 # dotplot
 source("col.rb.R")
 source("drawDendrogram.R")
 source("Dotplot.R")
-png(width=2000,height=1800,file="Plots/dot.png",res=300)
+png(width=2000,height=2200,file="Plots/dot.png",res=300)
 par(mar=c(4,8,2,12),family="Liberation Sans")
-Dotplot(postmean, SORT=c(F,T),zlim=c(log(1/3),log(3)),ltsr=1-lfsr)
+Dotplot(postmean, SORT=c(F,T),zlim=c(log(1/3),log(3)),ltsr=1-lfsr, cex=0.8)
 dev.off()
 
 

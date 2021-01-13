@@ -56,7 +56,6 @@ tmp$grp=abc
         rownames(condval)=rownames(condsd)=rnam
 	condval=condval[match(celltype,rnam),]
 	condsd =condsd[match(celltype,rnam),]
-print(head(rownames(condval)))
         colnames(condval)=colnames(condsd)=cnam
         lfsr = pnorm(condval,0,condsd)
         lfsr[is.na(lfsr)]=1
