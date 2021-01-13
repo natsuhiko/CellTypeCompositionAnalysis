@@ -9,7 +9,9 @@ colnames(Y)=unlist(strsplit(readLines("../Data/Y.txt",n=1),"\t")) # rename cell 
 
 # meta data table
 metadata = read.table("../Data/metadata.txt",header=T,sep="\t",as.is=T)
-metadata=metadata[match(rownames(Y),metadata$Sample),]
+metadata=metadata[match(rownames(Y),metadata$Sample),] # matching Y and metadata by Sample ID
+
+# !!! EXAMPLE DATA SPECIFIC SCALING !!!
 metadata$Cell_viability[is.na(metadata$Cell_viability)]=mean(metadata$Cell_viability,na.rm=T)
 metadata$Age=scale(log10(metadata$Age))
 metadata$Cell_viability=scale(metadata$Cell_viability)
@@ -25,6 +27,7 @@ metadataExp=cbind(metadata[rep(match(rownames(Y),as.character(metadata$Sample)),
 
 
 # poisson regression model
+# !!! EXAMPLE DATA SPECIFIC MODEL FORMULA !!!
 res.prop=glmer(I(c(Y))~
 (1|Celltype)
 +(1|Sample)
@@ -77,6 +80,7 @@ Forest(sdse.prop[seq(nrow(sdse.prop))%in%grep("Celltype",rownames(sdse.prop)),],
 dev.off()
 
 # Posterior mean and standard deviation
+# !!! EXAMPLE DATA SPECIFIC POSTERIOR COMPUTATION !!!
 source("getCondVal.R")
 postmean = cbind(
     getCondVal(res.prop.ranef,"Tissue:Celltype",ncells,celltype=colnames(Y))[[1]],
@@ -100,7 +104,7 @@ lfsr = cbind(
     #getCondVal(res.prop.ranef,"Ethnicity:Celltype",ncells,celltype=colnames(Y))[[2]]
 )
 
-# dotplot
+# Dotplot
 source("col.rb.R")
 source("drawDendrogram.R")
 source("Dotplot.R")
