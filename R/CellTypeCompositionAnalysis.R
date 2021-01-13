@@ -87,10 +87,9 @@ postmean = cbind(
     NA,
     getCondVal(res.prop.ranef,"COVID_status:Celltype",ncells,celltype=colnames(Y))[[1]][,c(2,1,3)],
     NA,
-    getCondVal(res.prop.ranef,"Celltype",ncells,celltype=colnames(Y))[[1]][,1,drop=F], # effect sizes for Age
+    getCondVal(res.prop.ranef,"Celltype",ncells,celltype=colnames(Y))[[1]][,1,drop=F], # effect sizes for Cell viability
     NA,
-    getCondVal(res.prop.ranef,"Celltype",ncells,celltype=colnames(Y))[[1]][,2,drop=F]
-    #getCondVal(res.prop.ranef,"Ethnicity:Celltype",ncells)[[1]]
+    getCondVal(res.prop.ranef,"Celltype",ncells,celltype=colnames(Y))[[1]][,2,drop=F] # effect size for Age
 )
 
 lfsr = cbind(
@@ -98,10 +97,9 @@ lfsr = cbind(
     NA,
     getCondVal(res.prop.ranef,"COVID_status:Celltype",ncells,celltype=colnames(Y))[[2]][,c(2,1,3)],
     NA,
-    getCondVal(res.prop.ranef,"Celltype",ncells,celltype=colnames(Y))[[2]][,1,drop=F], # effect sizes for Age
+    getCondVal(res.prop.ranef,"Celltype",ncells,celltype=colnames(Y))[[2]][,1,drop=F], # SD for Cell viability
     NA,
-    getCondVal(res.prop.ranef,"Celltype",ncells,celltype=colnames(Y))[[2]][,2,drop=F]
-    #getCondVal(res.prop.ranef,"Ethnicity:Celltype",ncells,celltype=colnames(Y))[[2]]
+    getCondVal(res.prop.ranef,"Celltype",ncells,celltype=colnames(Y))[[2]][,2,drop=F] # SD for Age
 )
 
 # Dotplot
